@@ -1,0 +1,126 @@
+{% extends 'shop/basic.html' %}
+{% block title %}Tracker{% endblock %}
+{% block navtracker %}active{% endblock %}
+{% block body %}
+
+<div class="container my-4">
+    <div class="col">
+        <h2>Enter Order ID & Other details</h2>
+        <form action="#" id="track" method="POST">{% csrf_token %}
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="inputEmail4">Order ID</label>
+                    <input type="text" name="order1" class="form-control" id="order1" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Email</label>
+                    <input type="email" name="email" class="form-control" id="email" required>
+                </div>
+            </div>
+            <button type="submit" id="place" class="btn btn-primary">Track Order</button>
+        </form>
+    </div>
+    <div id="col1" style="display: none;" class="col my-3">
+        <h2>Your Items</h2>
+        <div class="my-2">
+            <ul class="list-group" id="items1">
+            </ul>
+        </div>
+    </div>
+    <div style="display: none;" id="price" class="my-2">
+        <nav aria-label="breadcrumb">
+            <ol style="float: right;" class="breadcrumb">
+              <li class="breadcrumb-item active" aria-current="page">Amount to be paid -  Rs. <span id="tprice"></span>/-</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-4 my-3">
+        <h2>Your order status</h2>
+        <div class="my-2">
+            <ul class="list-group" id="items">
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+<script>
+// {% block js %}
+
+    let cart=localStorage.getItem('cart')
+    if(cart==null)
+    {
+        cartobj={}
+    }
+    else
+    {
+        cartobj=JSON.parse(cart)
+    }
+    let n=0;
+    for(i in cartobj)
+    {
+        n+=Number(cartobj[i][0]);
+    }
+    document.getElementById('cart').innerHTML=n;
+
+    document.getElementById('place').addEventListener('click',(e)=>{
+        e.preventDefault();
+        var formdata={
+            'order1': document.getElementById('order1').value,
+            'email': document.getElementById('email').value,
+            'csrfmiddlewaretoken':document.getElementsByName('csrfmiddlewaretoken')[0].value
+        }
+        $.ajax({
+            type:'POST',
+            url:'/shop/tracker',
+            data:formdata,
+            encode:true
+        })
+        .done((data)=>{
+            data=JSON.parse(data);
+            data1=data;
+            
+            
+            if(data.length>0&&data!={})
+            {
+                data=data.slice(0,-1);
+                str='';
+                for(i=0;i<data.length;i++){
+                    let text=data[i]['text']
+                    let ts=data[i]['time']
+                    str+=`<li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${text}
+                            <span class="badge badge-primary badge-pill">${ts}</span>
+                        </li>`;
+                }
+                document.getElementById('items').innerHTML=str;
+                document.getElementById('col1').style.display='block';
+                data1=data1.slice(-1)[0];
+                data1=Object.values(data1)[0]
+                data1=JSON.parse(data1)
+                str='';
+                p=0
+                for(items in data1)
+                {
+                    p+=Number(data1[items][0])*Number(data1[items][2])
+                    str+=`<li class="list-group-item d-flex justify-content-between align-items-center"><div>
+                            ${data1[items][1]} <b class="mx-3">Rs. ${Number(data1[items][0])*Number(data1[items][2])}/-</b></div>
+                            <span class="badge badge-primary badge-pill">${data1[items][0]}</span>
+                        </li>`;
+                }
+                document.getElementById('items1').innerHTML=str;
+                document.getElementById('price').style.display='block';
+                document.getElementById('tprice').innerHTML=p;
+                location.reload()
+            }
+            else
+            {
+                document.getElementById('price').style.display='none';
+                document.getElementById('col1').style.display='none';
+                document.getElementById('items').innerHTML="<h3>No items found</h3>";
+            }
+            
+        });
+    });
+// {% endblock %}
+</script>

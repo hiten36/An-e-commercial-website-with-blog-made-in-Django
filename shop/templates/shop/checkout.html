@@ -1,0 +1,161 @@
+{% extends 'shop/basic.html' %}
+{% block title %}Checkout{% endblock %}
+{% block body %}
+
+<div class="container my-4">
+    <div class="col my-4" id="first">
+        <h2>Step-1 - Hiten's Shop Checkout - Review your cart Items</h2>
+        <div>
+            <ul class="list-group" id="items">
+            </ul>
+        </div>
+        <div class="my-2">
+            <nav aria-label="breadcrumb">
+                <ol style="float: right;" class="breadcrumb">
+                  <li class="breadcrumb-item active" aria-current="page">Ready to checkout - Your Total: Rs. <span id="tprice"></span>/-</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="col" style="margin-top: 67px;">
+        <h2>Step 2 - Enter Address & Other details</h2>
+        <form action="/shop/checkout" method="POST">{% csrf_token %}
+            <input type="hidden" name="json" id="json">
+            <input type="hidden" name="price" id="price2">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="inputEmail4">Name</label>
+                    <input type="text" name="name" class="form-control" id="inputEmail4" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputPassword4">Email</label>
+                    <input type="email" name="email" class="form-control" id="inputPassword4" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="inputAddress">Address</label>
+                <input type="text" name="address" class="form-control" id="inputAddress" placeholder="1234 Main St" required>
+            </div>
+            <div class="form-group">
+                <label for="inputAddress2">Address 2</label>
+                <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="inputCity">City</label>
+                    <input type="text" name="city" class="form-control" id="inputCity" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputstate">State</label>
+                    <input type="text" name="state" class="form-control" id="inputstate" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="inputZip">Zip</label>
+                    <input type="text" name="zip" class="form-control" id="inputZip" required>
+                </div>
+                <div class="form-group col-md-8">
+                    <label for="inputphone">Phone</label>
+                    <input type="text" name="phone" class="form-control" id="inputphone" required>
+                </div>
+            </div>
+            <button type="submit" id="place" class="btn btn-primary">Place Order</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+<script>
+// {% block js %}
+
+    let cart=localStorage.getItem('cart')
+    if(cart==null)
+    {
+        cartobj={}
+    }
+    else
+    {
+        cartobj=JSON.parse(cart)
+    }
+    let n=0;
+    for(i in cartobj)
+    {
+        n+=Number(cartobj[i][0]);
+    }
+    function update(cartobj)
+    {
+        mystr='';
+        price=0;
+        for(item in cartobj)
+        {
+            let name=cartobj[item][1];
+            let qty=cartobj[item][0];
+            price+=Number(cartobj[item][2])*Number(cartobj[item][0]);
+            mystr+=`<li id="lst${item}" class="list-group-item d-flex justify-content-between align-items-center"><div>
+                        ${name}<b id="price${item}" class="ml-4">Rs. ${Number(cartobj[item][2])*Number(cartobj[item][0])}/-</b></div><div>
+                        <button id="plus${item}" class="btn btn-primary plus">+</button> <span id="badge${item}" class="badge mx-2 badge-primary badge-pill">${qty}</span> <button id="minus${item}" style="padding: 5px 15px;" class="btn btn-primary minus">-</button></div>
+                    </li>`;
+        }
+        document.getElementById('items').innerHTML=mystr;
+        document.getElementById('tprice').innerHTML=price;
+    }
+    document.getElementById('cart').innerHTML=n;
+    if(n==0)
+    {
+        document.getElementById('first').innerHTML='<h2>Nothing here Please add some items in cart.</h2>'
+    }
+    else
+    {
+        update(cartobj);
+    }
+    let b1=document.querySelectorAll('.plus');
+    for(pl of b1)
+    {
+        pl.addEventListener('click',(e)=>{
+            ids=e.target.id.slice(4,);
+            cartobj[ids][0]+=1;
+            document.getElementById(`badge${ids}`).innerHTML=cartobj[ids][0];
+            document.getElementById(`price${ids}`).innerHTML=`Rs. ${Number(cartobj[ids][2])*Number(cartobj[ids][0])}/-`;
+            price1=Number(document.getElementById('tprice').innerHTML.slice())+Number(cartobj[ids][2]);
+            document.getElementById('tprice').innerHTML=price1;
+            localStorage.setItem('cart',JSON.stringify(cartobj));
+        })
+    }
+    let b2=document.querySelectorAll('.minus');
+    for(mi of b2)
+    {
+        mi.addEventListener('click',(e)=>{
+            ids=e.target.id.slice(5,);
+            if(cartobj[ids][0]>0)
+            {
+                cartobj[ids][0]-=1;
+                document.getElementById(`badge${ids}`).innerHTML=cartobj[ids][0];
+                document.getElementById(`price${ids}`).innerHTML=`Rs. ${Number(cartobj[ids][2])*Number(cartobj[ids][0])}/-`;
+                price1=Number(document.getElementById('tprice').innerHTML.slice())-Number(cartobj[ids][2]);
+                document.getElementById('tprice').innerHTML=price1;
+                localStorage.setItem('cart',JSON.stringify(cartobj));
+            }
+            if(cartobj[ids][0]==0)
+            {
+                delete cartobj[ids];
+                localStorage.setItem('cart',JSON.stringify(cartobj));
+                document.getElementById(`lst${ids}`).remove();
+            }
+        })
+    }
+    flag=false
+    document.getElementById('place').addEventListener('click',()=>{
+        document.getElementById('json').value=JSON.stringify(cartobj);
+        document.getElementById('price2').value=document.getElementById('tprice').innerHTML;
+        localStorage.clear();
+        alert('Thanks for shopping with us. You can track your order anytime with Order ID = {{order_id}}')
+        flag=true;
+    })
+    if(flag)
+    {
+        document.location="/shop";
+    }
+    
+
+
+// {% endblock %}
+</script>

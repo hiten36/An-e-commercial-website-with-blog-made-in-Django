@@ -1,0 +1,184 @@
+{% extends 'blog/basic.html' %}
+{% block title %}BlogPost{% endblock %}
+{% block navblogpost %}active{% endblock %}
+{% block body %}
+{% load humanize %}
+
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-8 blog-main">
+            <div class="blog-post">
+                <h1 class="blog-post-title">{{blogs.post_title}}</h1>
+                <p>{{blogs.post_desc}}</p>
+                <h2>{{blogs.post_head1}}</h2>
+                <p>{{blogs.post_desc1}}</p>
+                <h3>{{blogs.post_head2}}</h3>
+                <p>{{blogs.post_desc2}}</p>
+            </div>
+        </div>
+
+        <aside id="{{length}}" class="col-md-4 len blog-sidebar">
+            <div class="p-4 mb-3 bg-light rounded">
+                <h4 class="font-italic">About</h4>
+                <p class="mb-0">Saw you downtown singing the Blues. Watch you circle the drain. Why don't you let me
+                    stop by? Heavy is the head that <em>wears the crown</em>. Yes, we make angels cry, raining down on
+                    earth from up above.</p>
+                <h4 class="mt-3" >Written By - </h4>
+                <p><b><em>{{blogs.auth_name}}</em></b></p>
+            </div>
+        </aside>
+    </div>
+    <h2 style="margin-top: 60px;">Comments</h2>
+    {% if user.is_authenticated %}
+    <form class="my-3" action="/blog/fblog1/{{blogs.post_id}}" method="POST">{% csrf_token %}
+        <div class="form-group">
+            <label for="usercomm"><h2>Post a comment</h2></label>
+            <textarea name="comm1" class="mb-2 form-control" id="usercomm" rows="3"></textarea>
+            <button type="submit" id="combtn" class="btn btn-primary">Post</button>
+        </div>
+    </form>
+    {% else %}
+    <h3>You need to log in before posting comments.</h3>
+    {% endif %}
+    <div style="margin-bottom: 100px;">
+        <ul class="mt-3 list-unstyled">
+            {% for i in comm %}
+            {% if blogs.post_id == i.blog_id1 %}
+            <li id="comm{{i.user_id}}" class="media my-4">
+                {% load static %}
+                <img src="/static/blog/user.png" height="50px" class="mr-3" alt="...">
+                <div class="media-body">
+                    <p class="mb-1" style="width: 35rem;">{{i.desc}}</p>
+                    <div class="row">
+                        <input type="hidden" id="hid{{i.user_id}}" name="likehid">
+                        {% for k in likes %}
+                        <form method="POST">{% csrf_token %}
+                            {% if blogs.post_id == k.blog_id3 %}
+                            {% if k.like_comm_id == i.user_id %}
+                            {% if user.is_authenticated %}
+                            {% if k.like_user_id != request.user %}
+                            <input type="hidden" id="l{{k.like_id}}" name="likes21" value="{{k.likes21}}">
+                            <button style="font-size:14px ;" id="like{{i.user_id}}" class="ml-3 px-1 py-0 btn btn-success like">Like </button>
+                            {% else %}
+                            <a href="#" style="font-size:14px ;" class="ml-3 px-1 py-0 btn btn-success disabled">Liked </a>
+                            {% endif %}
+                            
+                            {% else %}
+                            <span style="font-size: 14px;" class="badge ml-2 badge-info">Likes</span>
+                            {% endif %}
+                            <b id="like1{{i.user_id}}">({{k.like_count}})</b>
+                            {% endif %}
+                            {% endif %}
+                            {% endfor %}
+                        </form>
+                        <div style="cursor: pointer; text-decoration: underline;" class="ml-3 reply"><b id="reply{{i.user_id}}">Reply</b></div>
+                    </div>
+                    <div id="repid{{i.user_id}}"></div>
+                    {% for j in reps %}
+                    {% if blogs.post_id == j.blog_id2 %}
+                    {% if i.user_id == j.comm_id %}
+                    <div class="media mt-3" style="background-color: rgb(248, 237, 177);">
+                        <img class="mx-2" src="/static/blog/user.png" height="38px" alt="...">
+                        <div class="media-body">
+                            <p style="width: 22rem;">{{j.desc1}}</p>
+                        </div>
+                        <div style="font-size: 15px;" ><b>Replied By: <span>{{j.user_name1}}</span> at <span>{{j.ts2|naturaltime}}</span></b></div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <div style="margin-left: 30px;"><b>Commented By: <span>{{i.user_name}}</span> at <span>{{i.ts1|naturaltime}}</span></b></div>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div style="display: flex;">
+        <div ><button id="prev{{blogs.post_id}}" type="button" class="prev btn btn-danger">Previous Blog</button></div>
+        <div style="position: absolute; right: 24rem;"><button id="next{{blogs.post_id}}" type="button" class="next btn btn-danger">Next Blog</button></div>
+    </div>
+</div>
+{% endblock %}
+<script>
+    // {% block js %}
+
+    let b1=document.querySelectorAll('.like');
+    for(b of b1)
+    {
+        b.addEventListener('click',(e)=>{
+            e.preventDefault();
+            ids=e.target.id.slice(4,);
+            document.getElementById(`like${ids}`).innerHTML='Liked';
+            document.getElementById(`like${ids}`).disabled=true;
+            let s=Number(document.getElementById(`like1${ids}`).innerHTML.slice(1,-1));
+            document.getElementById(`hid${ids}`).value=s+1;
+            document.getElementById(`like1${ids}`).innerHTML=`(${s+1})`;
+            
+            // console.log(document.getElementsByName('csrfmiddlewaretoken')[1])
+            let n=document.querySelector('.prev').id.slice(4,);
+            var formdata={
+            'likes21':document.getElementById(`like${ids}`).previousElementSibling.id.slice(1,),
+            'like1': document.getElementById(`hid${ids}`).value,
+            'comm_id':ids,
+            'csrfmiddlewaretoken':document.getElementsByName('csrfmiddlewaretoken')[1].value
+            }
+            $.ajax({
+                type:'POST',
+                url:`/blog/blogpost/${n}`,
+                data:formdata,
+                encode:true
+            })
+        })
+    }
+    let b2=document.querySelectorAll('.reply')
+    for(b of b2)
+    {
+        b.addEventListener('click',(e)=>{
+            ids=e.target.id.slice(5,);
+            let n=document.querySelector('.prev').id.slice(4,);
+            {% if user.is_authenticated %}
+            str=`<form class="my-3" action="/blog/fblog2/${n}" method="POST">{% csrf_token %}
+                    <div class="form-group">
+                        <input type="hidden" id="hcomm${ids}" name="hcomm_id">
+                        <label for="usercomm1"></label>
+                        <textarea name="comm2" class="mb-2 form-control" id="usercomm1" rows="3"></textarea>
+                        <button type="submit" id="combtn1" class="btn btn-primary">Post</button>
+                    </div>
+                </form>`;
+            {% else %}
+            str='<h3 class="my-4">You need to log in before posting replies.</h3>';
+            {% endif %}
+            document.getElementById(`repid${ids}`).innerHTML=str;
+            document.getElementById(`hcomm${ids}`).value=ids;
+            
+        })
+    }
+    document.querySelector('.prev').addEventListener('click',(e)=>{
+        ids=e.target.id.slice(4,);
+        ids1=Number(ids)-1;
+        if(ids1>0)
+        {
+            document.location=`/blog/blogpost/${ids1}`;
+        }
+        else
+        {
+            alert("This is the first blog!")
+        }
+    })
+    document.querySelector('.next').addEventListener('click',(e)=>{
+        ids=e.target.id.slice(4,);
+        ids1=(Number(ids)+1);
+        ids2=Number(document.getElementsByClassName('len')[0].id);
+        if(ids1<=6)
+        {
+            document.location=`/blog/blogpost/${ids1}`;
+        }
+        else
+        {
+            alert('this is the last blog!');
+        }
+    })
+    // {% endblock %}
+</script>

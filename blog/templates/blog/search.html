@@ -1,0 +1,44 @@
+{% extends 'blog/basic.html' %}
+{% block title %}Blog|Home{% endblock %}
+{% block body %}
+
+<div class="container my-4">
+    
+
+    {% if posts|length == 0 %}
+    <h3>No search Results found for <b>{{query}}</b></h3>
+    <h4>Search Help:</h4>
+    <ul>
+        <li>Check your search for typos</li>
+        <li>Use more generic items</li>
+        <li>The Blog your are searching may be removed from our website or not yet been uploaded</li>
+        <li>Need more search help. <a href="/blog/contact">Contact Us</a></li>
+    </ul>
+    {% else %}
+    {% if query|length == 0 %}
+    <h4>Please dont leave search Blank</h4>
+    {% else %}
+    <h2>Search results for <b>{{query}}</b></h2>
+    <div class="row mb-2">
+        {% for i in posts %}
+        <div class="col-md-6">
+            <div style="height: 260px;" class="row no-gutters border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250 position-relative">
+                <div class="col p-4 d-flex flex-column position-static">
+                    <strong class="d-inline-block mb-2 text-primary">{{i.post1}}</strong>
+                    <h3 class="mb-0">{{i.post2}}</h3>
+                    <div class="mb-1 text-muted">{{i.ts}}</div>
+                    <p class="card-text mb-auto">{{i.post3}}</p>
+                    <a href="/blog/blogpost/{{i.post_id1}}" class="stretched-link">Continue reading</a>
+                </div>
+                <div style="margin-top: 10px;" class="col-auto d-none d-lg-block">
+                    <img height="220px" width="290px" src="/media/{{i.img}}" alt="">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+{% endblock %}
